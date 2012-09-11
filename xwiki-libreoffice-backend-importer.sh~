@@ -40,7 +40,6 @@ function post_file {
 }
 
 post_file $REC_FILE;
-exit;
 
 #post_file "Works.xls";
 # post_file "Fails.xls";
