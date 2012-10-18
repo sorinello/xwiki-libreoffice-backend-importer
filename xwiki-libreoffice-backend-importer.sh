@@ -2,8 +2,9 @@
 ###############################################################################
 ###                 XWiki Open Office/Libre Office Importer                 ###
 ###                                                                         ###
-###  This script allow the import of Office document using a Open Office or ###
-###  Libre Office Server. It uses POST method and supports batch import.    ###
+###  This script allow the import of Office documents using an Open Office  ###
+###  or Libre Office Server. It uses POST method and supports batch import. ### 
+###                                                                         ###
 ###############################################################################
 # ---------------------------------------------------------------------------
 # See the NOTICE file distributed with this work for additional
@@ -50,10 +51,6 @@ XWIKI_PASSWORD='admin';
 COOKIE_FILE='cookies.txt';
 LOG_FILE_NAME='log.txt';
 WORKING_DIR=$PWD;
-FILE_TYPES=$MICROSOFT_WORD_FILES;
-
-
-
 
 ## Parameters
 # Program name for usage
@@ -69,7 +66,7 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -s                  Import a single files, added as parameter"
-    echo "  -b                  Import batch files. All document files from the current working dir. Filtering allowed. Possible values are: word, excel, powerpoint. Default is word.(Only when -b is used) "
+    echo "  -b                  Import batch files. All document files from the current working dir. Filtering allowed. Possible values are: word, excel, powerpoint. Default is word. Only when -b is used"
     exit 1
 }
 
@@ -77,17 +74,18 @@ usage() {
 function LOGIN_TO_XWIKI {              
     curl --user-agent 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0' --cookie-jar $COOKIE_FILE \
         --data "j_username=$XWIKI_USERNAME&j_password=$XWIKI_PASSWORD" $XWIKI_FORM_LOGIN_URL;
-    echo "Cookie Created/Logged In";
+    echo "$info Cookie Created/Logged In";
 }
 
+# Destroy the cookie. Further operations will require a new login
 function LOGOUT_FROM_XWIKI {
     if [ -e $COOKIE_FILE ];then
         rm $COOKIE_FILE;
     fi
-    echo "Cookie Destroyed/Logged Out";
+    echo "$info Cookie Destroyed/Logged Out";
 }
 
-function post_file {
+function UPLOAD_FILE {
     CURRENT_FILE="$1";
     TARGET_PAGE_NAME="${CURRENT_FILE%.*}";
     curl -s --cookie $COOKIE_FILE --request POST -F "filePath=@$CURRENT_FILE" -F "targetSpace=$TARGET_SPACE" -F "targetPage=$TARGET_PAGE_NAME" -o $LOG_FILE_NAME $XWIKI_OFFICE_IMPORTER_URL;
@@ -95,8 +93,8 @@ function post_file {
     RESULTS_MESSAGE=$(grep 'class=\"box' $LOG_FILE_NAME | sed -e :a -e 's/<[^>]*>//g;/</N;//ba');
     #if [[grep -e "succeeded" "$RESULTS_MESSAGE"]]
     if [[ `echo $RESULTS_MESSAGE | grep 'succeeded.'` ]]                                                                                                                                        
-     then echo "${bldgrn} $CURRENT_FILE -> $RESULTS_MESSAGE ${txtrst}";
-     else echo "${bldred} $CURRENT_FILE -> $RESULTS_MESSAGE ${txtrst}";
+     then echo "$info$bldgrn Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
+     else echo "$info$bldred Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
     fi
     rm -f $LOG_FILE_NAME;
 
@@ -109,13 +107,13 @@ while getopts "s:b:h" OPT; do
             LOGIN_TO_XWIKI
             SINGLE_FILE_NAME=$OPTARG;
             #echo $SINGLE_FILE_NAME;
-            post_file $SINGLE_FILE_NAME;
+            UPLOAD_FILE $SINGLE_FILE_NAME;
             LOGOUT_FROM_XWIKI;
             ;;
         b)  # Batch import
             LOGIN_TO_XWIKI
             FILTER=$OPTARG;
-            echo "FILTER" $FILTER;
+            echo "$info Using Filter: " $FILTER;
             if [[ $FILTER == "word" ]]; then 
                FILE_TYPES=`ls | grep .doc`;
             fi
@@ -125,14 +123,13 @@ while getopts "s:b:h" OPT; do
             if [[ $FILTER == "powerpoint" ]]; then 
                FILE_TYPES=`ls | grep .ppt`;
             fi
-            echo "${info} Batch Import starting in directory" $WORKING_DIR
+            echo "$info Batch Import starting in directory" $WORKING_DIR
             shopt -s nullglob;
             for f in $FILE_TYPES;
             do 
-               echo "${bldwht} Processing $f file.."
-               post_file "$f"
+               UPLOAD_FILE "$f"
             done
-            echo "Batch Import ended"
+            echo "$info Batch Import ended"
             LOGOUT_FROM_XWIKI
             ;;
         h)  # Print Usage Information
