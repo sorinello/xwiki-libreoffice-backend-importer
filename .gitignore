@@ -7,3 +7,5 @@
 *.pptx
 # Ignore cookies.txt
 cookies.txt
+# Ignore tmp file created by gedit
+*.sh~
