@@ -1,4 +1,4 @@
-# Ignore doc, xls, word files
+# Ignore doc, xls, ppt files
 *.doc
 *.docx
 *.xls
@@ -7,5 +7,7 @@
 *.pptx
 # Ignore cookies.txt
 cookies.txt
+#Ignore other text files
+*.txt
 # Ignore tmp file created by gedit
 *.sh~
