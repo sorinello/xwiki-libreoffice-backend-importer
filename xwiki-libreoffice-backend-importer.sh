@@ -52,9 +52,7 @@ LOG_FILE_NAME='log.txt';
 WORKING_DIR=$PWD;
 FILE_TYPES=$MICROSOFT_WORD_FILES;
 
-MICROSOFT_EXCEL_FILES=`ls | grep .xls`;
-MICROSOFT_WORD_FILES=`ls | grep .doc`;
-MICROSOFT_POWERPOINT_FILES=`ls | grep .ppt`;
+
 
 
 ## Parameters
@@ -118,11 +116,14 @@ while getopts "s:b:h" OPT; do
             LOGIN_TO_XWIKI
             FILTER=$OPTARG;
             echo "FILTER" $FILTER;
-            if [[ $FILTER == "word" ]]; then       FILE_TYPES=$MICROSOFT_WORD_FILES;
+            if [[ $FILTER == "word" ]]; then 
+               FILE_TYPES=`ls | grep .doc`;
             fi
-            if [[ $FILTER == "excel" ]]; then      FILE_TYPES=$MICROSOFT_EXCEL_FILES;
+            if [[ $FILTER == "excel" ]]; then  
+               FILE_TYPES=`ls | grep .xls`;
             fi
-            if [[ $FILTER == "powerpoint" ]]; then FILE_TYPES=$MICROSOFT_POWERPOINT_FILES;
+            if [[ $FILTER == "powerpoint" ]]; then 
+               FILE_TYPES=`ls | grep .ppt`;
             fi
             echo "${info} Batch Import starting in directory" $WORKING_DIR
             shopt -s nullglob;

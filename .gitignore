@@ -1,0 +1,9 @@
+# Ignore doc, xls, word files
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+# Ignore cookies.txt
+cookies.txt
