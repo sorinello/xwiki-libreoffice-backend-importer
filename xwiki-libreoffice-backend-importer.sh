@@ -65,8 +65,10 @@ usage() {
     echo "   - Attach multiple/batch files using POST with several filtering options."
     echo ""
     echo "Options:"
-    echo "  -s                  Import a single files, added as parameter"
-    echo "  -b                  Import batch files. All document files from the current working dir. Filtering allowed. Possible values are: word, excel, powerpoint. Default is word. Only when -b is used"
+    echo "  -t                  Specify the target hostname. If none specified, localhost:8080/xwiki is used. Don't forget to add the port and the path to XWiki"
+    echo "  -s                  Import a single files"
+    echo "  -b                  Import desired files from the working dir. Possible values are: word, excel, powerpoint. Default is word. Only when -b is used"
+    echo "  -h			Prints this message"
     exit 1
 }
 
@@ -74,7 +76,7 @@ usage() {
 function LOGIN_TO_XWIKI {              
     curl --user-agent 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0' --cookie-jar $COOKIE_FILE \
         --data "j_username=$XWIKI_USERNAME&j_password=$XWIKI_PASSWORD" $XWIKI_FORM_LOGIN_URL;
-    echo "$info Cookie Created/Logged In";
+    echo "$info Cookie Created/LoggedIn on" $XWIKI_URL;
 }
 
 # Destroy the cookie. Further operations will require a new login
@@ -101,8 +103,11 @@ function UPLOAD_FILE {
 }
 
 # Parse command line arguments
-while getopts "s:b:h" OPT; do
+while getopts "t:s:b:h" OPT; do
     case $OPT in
+        t)  #Specify the target host
+            XWIKI_URL=$OPTARG;
+	    ;;
         s)  # Single file name
             LOGIN_TO_XWIKI
             SINGLE_FILE_NAME=$OPTARG;

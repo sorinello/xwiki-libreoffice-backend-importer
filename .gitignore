@@ -9,5 +9,6 @@
 cookies.txt
 #Ignore other text files
 *.txt
+*.html
 # Ignore tmp file created by gedit
 *.sh~
