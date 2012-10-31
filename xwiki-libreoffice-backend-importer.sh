@@ -41,7 +41,7 @@ pass=${bldblu}*${txtrst}
 warn=${bldred}*${txtrst}
 ques=${bldblu}?${txtrst}
 
-## Default values (Not defined as arameters) ##
+## Default values (Not defined as parameters) ##
 XWIKI_URL='http://localhost:8080/xwiki';
 XWIKI_FORM_LOGIN_URL=$XWIKI_URL"/bin/loginsubmit/XWiki/XWikiLogin";
 XWIKI_OFFICE_IMPORTER_URL=$XWIKI_URL"/bin/view/XWiki/OfficeImporterResults";
@@ -66,9 +66,9 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -t                  Specify the target hostname. If none specified, localhost:8080/xwiki is used. Don't forget to add the port and the path to XWiki"
-    echo "  -s                  Import a single files"
+    echo "  -s                  Import a single file"
     echo "  -b                  Import desired files from the working dir. Possible values are: word, excel, powerpoint. Default is word. Only when -b is used"
-    echo "  -h			Prints this message"
+    echo "  -h                  Prints this message"
     exit 1
 }
 
@@ -88,9 +88,10 @@ function LOGOUT_FROM_XWIKI {
 }
 
 function UPLOAD_FILE {
+    PRINT_CONTEXT;
     CURRENT_FILE="$1";
     TARGET_PAGE_NAME="${CURRENT_FILE%.*}";
-    curl -s --cookie $COOKIE_FILE --request POST -F "filePath=@$CURRENT_FILE" -F "targetSpace=$TARGET_SPACE" -F "targetPage=$TARGET_PAGE_NAME" -o $LOG_FILE_NAME $XWIKI_OFFICE_IMPORTER_URL;
+    curl -s --cookie $COOKIE_FILE --request POST -F "filePath=@$CURRENT_FILE" -F "targetSpace=$XWIKI_TARGET_SPACE" -F "targetPage=$TARGET_PAGE_NAME" -o $LOG_FILE_NAME $XWIKI_OFFICE_IMPORTER_URL;
 
     RESULTS_MESSAGE=$(grep 'class=\"box' $LOG_FILE_NAME | sed -e :a -e 's/<[^>]*>//g;/</N;//ba');
     #if [[grep -e "succeeded" "$RESULTS_MESSAGE"]]
@@ -99,7 +100,18 @@ function UPLOAD_FILE {
      else echo "$info$bldred Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
     fi
     rm -f $LOG_FILE_NAME;
+}
 
+# Used for Debugging the script
+function PRINT_CONTEXT {
+echo "XWIKI_URL" $XWIKI_URL;
+echo "XWIKI_FORM_LOGIN_URL" $XWIKI_FORM_LOGIN_URL;
+echo "XWIKI_OFFICE_IMPORTER_URL" $XWIKI_OFFICE_IMPORTER_URL;
+echo "XWIKI_TARGET_SPACE" $XWIKI_TARGET_SPACE;
+echo "XWIKI_USERNAME" $XWIKI_USERNAME;
+echo "XWIKI_PASSWORD" $XWIKI_PASSWORD;
+echo "COOKIE_FILE" $COOKIE_FILE;
+echo "LOG_FILE_NAME" $LOG_FILE_NAME;
 }
 
 # Parse command line arguments
@@ -107,7 +119,9 @@ while getopts "t:s:b:h" OPT; do
     case $OPT in
         t)  #Specify the target host
             XWIKI_URL=$OPTARG;
-	    ;;
+            XWIKI_FORM_LOGIN_URL=$XWIKI_URL"/bin/loginsubmit/XWiki/XWikiLogin";
+            XWIKI_OFFICE_IMPORTER_URL=$XWIKI_URL"/bin/view/XWiki/OfficeImporterResults";
+            ;;
         s)  # Single file name
             LOGIN_TO_XWIKI
             SINGLE_FILE_NAME=$OPTARG;
