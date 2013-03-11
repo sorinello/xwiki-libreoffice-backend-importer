@@ -74,7 +74,7 @@ usage() {
 
 # Login into XWiki
 function LOGIN_TO_XWIKI {              
-    curl --user-agent 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0' --cookie-jar $COOKIE_FILE \
+    curl --user-agent 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0' --connect-timeout '36000' --max-time '36000' --cookie-jar $COOKIE_FILE \
         --data "j_username=$XWIKI_USERNAME&j_password=$XWIKI_PASSWORD" $XWIKI_FORM_LOGIN_URL;
     echo "$info Cookie Created/LoggedIn on" $XWIKI_URL;
 }
@@ -88,15 +88,18 @@ function LOGOUT_FROM_XWIKI {
 }
 
 function UPLOAD_FILE {
-    PRINT_CONTEXT;
+    PRINT_CONTEXT $1;
     CURRENT_FILE="$1";
     TARGET_PAGE_NAME="${CURRENT_FILE%.*}";
-    curl -s --cookie $COOKIE_FILE --request POST -F "filePath=@$CURRENT_FILE" -F "targetSpace=$XWIKI_TARGET_SPACE" -F "targetPage=$TARGET_PAGE_NAME" -o $LOG_FILE_NAME $XWIKI_OFFICE_IMPORTER_URL;
+    curl -s --connect-timeout '36000' --max-time '36000' --cookie $COOKIE_FILE --request POST -F "filePath=@$CURRENT_FILE" -F "targetSpace=$XWIKI_TARGET_SPACE" -F "targetPage=$TARGET_PAGE_NAME" -o $LOG_FILE_NAME $XWIKI_OFFICE_IMPORTER_URL;
 
-    RESULTS_MESSAGE=$(grep 'class=\"box' $LOG_FILE_NAME | sed -e :a -e 's/<[^>]*>//g;/</N;//ba');
+    #RESULTS_MESSAGE=$(grep 'class=\"box' $LOG_FILE_NAME | sed -e :a -e 's/<[^>]*>//g;/</N;//ba');
+    RESULTS_MESSAGE=$(cat $LOG_FILE_NAME);
     #if [[grep -e "succeeded" "$RESULTS_MESSAGE"]]
-    if [[ `echo $RESULTS_MESSAGE | grep 'succeeded.'` ]]                                                                                                                                        
-     then echo "$info$bldgrn Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
+    if [[ `echo $RESULTS_MESSAGE | grep 'succeeded.'` ]]                                                                                                             
+     then 
+          RESULTS_MESSAGE=$(grep 'class=\"box' $LOG_FILE_NAME | sed -e :a -e 's/<[^>]*>//g;/</N;//ba');
+          echo "$info$bldgrn Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
      else echo "$info$bldred Processing $CURRENT_FILE file -> $RESULTS_MESSAGE ${txtrst}";
     fi
     rm -f $LOG_FILE_NAME;
@@ -104,6 +107,7 @@ function UPLOAD_FILE {
 
 # Used for Debugging the script
 function PRINT_CONTEXT {
+echo "Importing file" $1;
 echo "XWIKI_URL" $XWIKI_URL;
 echo "XWIKI_FORM_LOGIN_URL" $XWIKI_FORM_LOGIN_URL;
 echo "XWIKI_OFFICE_IMPORTER_URL" $XWIKI_OFFICE_IMPORTER_URL;
@@ -127,7 +131,7 @@ while getopts "t:s:b:h" OPT; do
             SINGLE_FILE_NAME=$OPTARG;
             #echo $SINGLE_FILE_NAME;
             UPLOAD_FILE $SINGLE_FILE_NAME;
-            LOGOUT_FROM_XWIKI;
+            #LOGOUT_FROM_XWIKI;
             ;;
         b)  # Batch import
             LOGIN_TO_XWIKI
@@ -146,10 +150,11 @@ while getopts "t:s:b:h" OPT; do
             shopt -s nullglob;
             for f in $FILE_TYPES;
             do 
-               UPLOAD_FILE "$f"
+               #echo $f;
+               UPLOAD_FILE "$f";
             done
             echo "$info Batch Import ended"
-            LOGOUT_FROM_XWIKI
+            #LOGOUT_FROM_XWIKI
             ;;
         h)  # Print Usage Information
             usage
